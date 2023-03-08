@@ -41,3 +41,24 @@ defmodule TodoList do
     %TodoList{todo_list | entries: new_entries}
   end
 end
+
+defmodule TodoList.CsvImporter do
+  def import!(path) do
+    File.stream!(path)
+    |> Stream.map(&String.replace(&1, "\n", ""))
+    |> Stream.map(&String.split(&1, ","))
+    |> Stream.map(fn [date, title] ->
+      [year, month, day] = String.split(date, "/")
+      {{year, month, day}, title}
+    end)
+    |> Enum.map(fn {{year, month, day}, title} ->
+      year = String.to_integer(year)
+      month = String.to_integer(month)
+      day = String.to_integer(day)
+
+      {_, entry_date} = Date.new(year, month, day)
+      %{date: entry_date, title: title}
+    end)
+    |> TodoList.new()
+  end
+end
